@@ -1,6 +1,6 @@
 # Hotel Room Reservation System
 
-A full-stack web application built with **Next.js**, **Sequelize**, and **SQLite** to dynamically optimize and manage room reservations for a 10-floor hotel. 
+A full-stack web application built with **Next.js**, **Sequelize**, and **PostgreSQL** to dynamically optimize and manage room reservations for a 10-floor hotel. 
 
 ## Features
 - **Visual Dashboard**: A 10-floor dynamic grid highlighting available, occupied, and recently booked rooms.
@@ -20,7 +20,7 @@ As per the requirement constraints, the reservation algorithm follows these rule
 ## Technology Stack
 - **Frontend**: Next.js App Router, React, Tailwind CSS.
 - **Backend**: Next.js API Routes.
-- **Database**: SQLite integrated with Sequelize ORM. (Self-contained, no external database server required).
+- **Database**: PostgreSQL integrated with Sequelize ORM.
 
 ## Local Installation
 
@@ -29,14 +29,20 @@ As per the requirement constraints, the reservation algorithm follows these rule
    npm install
    ```
 
-2. **Run the Development Server**
+2. **Environment Variables**
+   Create a `.env.local` file in the root directory and add your PostgreSQL connection string:
+   ```env
+   DATABASE_URL="postgres://user:password@localhost:5432/hotel"
+   ```
+
+3. **Run the Development Server**
    ```bash
    npm run dev
    ```
 
-3. **View the Application**
-   Open your browser to [http://localhost:3000](http://localhost:3000). The database (`hotel.sqlite`) will automatically initialize and seed the 97 rooms upon the first API request.
+4. **View the Application**
+   Open your browser to [http://localhost:3000](http://localhost:3000). The database tables will automatically initialize and seed the 97 rooms upon the first API request.
 
 ## Live Deployment
 This project is Next.js-ready and can be directly deployed to services like Vercel or Netlify.
-Since SQLite operates as a local file, ensure your deployment environment persists the `.sqlite` file, or consider swapping the Sequelize dialect to Postgres if deploying on a serverless platform without persistent block storage.
+The Sequelize configuration expects a `DATABASE_URL` environment variable and is pre-configured to use `ssl: { require: true, rejectUnauthorized: false }` when running in a production environment, which ensures compatibility with hosted database providers like Vercel Postgres, Supabase, or AWS RDS.
