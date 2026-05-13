@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import fs from 'fs';
+import pg from 'pg'; // Explicitly import pg for Vercel/Netlify bundler tracing
 
 let sequelize;
 
@@ -33,6 +34,7 @@ if (!global.sequelize) {
       sslOptions.ca = caConfig;
     }
   }
+
   let dbUrl = process.env.DATABASE_URL || 'postgres://localhost:5432/hotel';
   try {
     const urlObj = new URL(dbUrl);
@@ -47,6 +49,7 @@ if (!global.sequelize) {
   // Stripping sslmode from the URL ensures the pg driver respects our strict dialectOptions.
   sequelize = new Sequelize(dbUrl, {
     dialect: 'postgres',
+    dialectModule: pg, // Explicitly pass the dialect module to fix serverless deployment errors
     dialectOptions: {
       ssl: sslOptions
     },
