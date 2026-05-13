@@ -1,65 +1,170 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [rooms, setRooms] = useState([]);
+  const [numRooms, setNumRooms] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [justBooked, setJustBooked] = useState([]);
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/rooms");
+      const data = await res.json();
+      setRooms(data.rooms);
+    } catch (e) {
+      console.error(e);
+      setMessage("Failed to load rooms");
+    }
+    setLoading(false);
+  };
+
+  const handleBook = async () => {
+    if (numRooms < 1 || numRooms > 5) {
+      setMessage("Error: You can only book between 1 and 5 rooms at a time.");
+      return;
+    }
+    setMessage("");
+    setJustBooked([]);
+    try {
+      const res = await fetch("/api/rooms/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ k: numRooms }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setJustBooked(data.booked);
+        setMessage(`Successfully booked ${data.booked.length} rooms!`);
+        fetchRooms();
+      } else {
+        setMessage(data.error || "Booking failed");
+      }
+    } catch (e) {
+      setMessage("Booking request failed");
+    }
+  };
+
+  const handleRandomize = async () => {
+    setMessage("");
+    setJustBooked([]);
+    setLoading(true);
+    await fetch("/api/rooms/random", { method: "POST" });
+    fetchRooms();
+  };
+
+  const handleReset = async () => {
+    setMessage("");
+    setJustBooked([]);
+    setLoading(true);
+    await fetch("/api/rooms/reset", { method: "POST" });
+    fetchRooms();
+  };
+
+  // Group rooms by floor
+  const floors = [];
+  for (let f = 10; f >= 1; f--) {
+    floors.push({
+      floor: f,
+      rooms: rooms.filter((r) => r.floor === f).sort((a, b) => a.roomIndex - b.roomIndex),
+    });
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main className="min-h-screen bg-gray-900 text-white p-8 font-sans">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-8 text-center">
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Hotel Room Reservation System</h1>
+          <p className="text-gray-400">Optimize travel time across 10 floors and 97 rooms.</p>
+        </header>
+
+        <div className="bg-gray-800 rounded-xl p-6 mb-8 shadow-lg border border-gray-700 flex flex-wrap gap-4 items-end justify-center">
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-400 mb-1">Number of Rooms (1-5)</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={numRooms}
+              onChange={(e) => setNumRooms(parseInt(e.target.value) || 1)}
+              className="bg-gray-900 border border-gray-600 rounded px-4 py-2 w-32 text-center text-xl focus:outline-none focus:border-blue-500"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+          <button onClick={handleBook} disabled={loading} className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-semibold transition-colors disabled:opacity-50 h-[46px]">
+            Book Rooms
+          </button>
+          <div className="w-px h-10 bg-gray-600 mx-4 hidden md:block"></div>
+          <button onClick={handleRandomize} disabled={loading} className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded font-semibold transition-colors disabled:opacity-50 h-[46px]">
+            Random Occupancy
+          </button>
+          <button onClick={handleReset} disabled={loading} className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-semibold transition-colors disabled:opacity-50 h-[46px]">
+            Reset All
+          </button>
         </div>
-      </main>
-    </div>
+
+        {message && (
+          <div className={`mb-6 p-4 rounded text-center font-semibold ${message.includes("Success") ? "bg-green-900/50 text-green-400" : "bg-red-900/50 text-red-400"}`}>
+            {message}
+          </div>
+        )}
+
+        <div className="flex gap-4 mb-4 justify-center text-sm font-medium">
+          <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-500 rounded-sm"></div> Available</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 bg-gray-600 rounded-sm"></div> Occupied</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-[0_0_10px_rgba(250,204,21,0.8)]"></div> Just Booked</div>
+        </div>
+
+        <div className="relative border-4 border-gray-700 rounded-2xl bg-gray-800 p-8 shadow-2xl overflow-x-auto">
+          {loading && rooms.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">Loading hotel structure...</div>
+          ) : (
+            <div className="flex flex-col gap-2 min-w-max">
+              {floors.map((floor) => (
+                <div key={floor.floor} className="flex items-center gap-4">
+                  {/* Stairs / Lift Indicator */}
+                  <div className="w-20 flex-shrink-0 bg-gray-700 border border-gray-600 rounded h-12 flex items-center justify-center text-sm font-bold text-gray-300 text-center">
+                    Floor {floor.floor} <br /> Lift
+                  </div>
+                  
+                  {/* Rooms */}
+                  <div className="flex gap-2 flex-grow">
+                    {floor.rooms.map((room) => {
+                      const isBookedNow = justBooked.includes(room.id);
+                      let bgColor = "bg-green-500 hover:bg-green-400";
+                      let textColor = "text-green-900";
+                      
+                      if (room.status === "occupied") {
+                        bgColor = "bg-gray-600";
+                        textColor = "text-gray-300";
+                      }
+                      if (isBookedNow) {
+                        bgColor = "bg-yellow-400 animate-pulse shadow-[0_0_15px_rgba(250,204,21,0.6)]";
+                        textColor = "text-yellow-900";
+                      }
+
+                      return (
+                        <div
+                          key={room.id}
+                          className={`w-14 h-12 flex items-center justify-center rounded font-bold text-sm transition-all duration-300 cursor-default border border-black/20 ${bgColor} ${textColor}`}
+                          title={`Room ${room.id} - ${room.status}`}
+                        >
+                          {room.id}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
