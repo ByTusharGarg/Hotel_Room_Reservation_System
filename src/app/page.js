@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 export default function Home() {
   const [rooms, setRooms] = useState([]);
-  const [numRooms, setNumRooms] = useState(1);
+  const [numRooms, setNumRooms] = useState("1");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [justBooked, setJustBooked] = useState([]);
@@ -26,7 +26,8 @@ export default function Home() {
   };
 
   const handleBook = async () => {
-    if (numRooms < 1 || numRooms > 5) {
+    const k = parseInt(numRooms, 10);
+    if (isNaN(k) || k < 1 || k > 5) {
       setMessage("Error: You can only book between 1 and 5 rooms at a time.");
       return;
     }
@@ -37,7 +38,7 @@ export default function Home() {
       const res = await fetch("/api/rooms/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ k: numRooms }),
+        body: JSON.stringify({ k }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -111,7 +112,7 @@ export default function Home() {
               min="1"
               max="5"
               value={numRooms}
-              onChange={(e) => setNumRooms(parseInt(e.target.value) || 1)}
+              onChange={(e) => setNumRooms(e.target.value)}
               className="bg-gray-900 border border-gray-600 rounded px-4 py-2 w-32 text-center text-xl focus:outline-none focus:border-blue-500"
             />
           </div>
