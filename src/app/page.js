@@ -32,6 +32,7 @@ export default function Home() {
     }
     setMessage("");
     setJustBooked([]);
+    setLoading(true);
     try {
       const res = await fetch("/api/rooms/book", {
         method: "POST",
@@ -42,12 +43,14 @@ export default function Home() {
       if (res.ok) {
         setJustBooked(data.booked);
         setMessage(`Successfully booked ${data.booked.length} rooms!`);
-        fetchRooms();
+        await fetchRooms();
       } else {
         setMessage(data.error || "Booking failed");
+        setLoading(false);
       }
     } catch (e) {
       setMessage("Booking request failed");
+      setLoading(false);
     }
   };
 
@@ -56,7 +59,7 @@ export default function Home() {
     setJustBooked([]);
     setLoading(true);
     await fetch("/api/rooms/random", { method: "POST" });
-    fetchRooms();
+    await fetchRooms();
   };
 
   const handleReset = async () => {
@@ -64,7 +67,7 @@ export default function Home() {
     setJustBooked([]);
     setLoading(true);
     await fetch("/api/rooms/reset", { method: "POST" });
-    fetchRooms();
+    await fetchRooms();
   };
 
   // Group rooms by floor
@@ -77,7 +80,23 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white p-8 font-sans">
+    <main className="min-h-screen bg-gray-900 text-white p-8 font-sans relative">
+      <style>{`
+        @keyframes progress {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        .animate-progress {
+          animation: progress 1.5s infinite linear;
+        }
+      `}</style>
+
+      {loading && (
+        <div className="fixed top-0 left-0 right-0 h-1.5 bg-gray-800 z-50 overflow-hidden shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+          <div className="w-1/2 h-full bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-progress"></div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Hotel Room Reservation System</h1>
